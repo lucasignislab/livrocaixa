@@ -11,11 +11,19 @@
   --expense: #bd554b;
   --focus: #1f75b6;
   --shadow: 0 14px 34px rgba(77, 62, 38, 0.1);
+  --type-page-title: 2.25rem;
+  --type-section-title: 1.25rem;
+  --type-card-value: 1.75rem;
+  --type-body: 0.875rem;
+  --type-label: 0.75rem;
+  --type-meta: 0.72rem;
+  --leading-tight: 1.15;
+  --leading-body: 1.5;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; color: var(--ink); background: var(--cream); font-family: Inter, sans-serif; }
+body { margin: 0; min-width: 320px; color: var(--ink); background: var(--cream); font-family: Inter, sans-serif; font-size: var(--type-body); line-height: var(--leading-body); }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -39,10 +47,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .transactions-topbar { padding-bottom: 28px; border-bottom: 1px solid var(--line); }
 .topbar, .period-toolbar, .section-heading, .dialog-header, .dialog-actions, .balance-details { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .date-line, .period-heading p, .section-heading p, .balance-copy p, .balance-status, .field span, .future-warning { color: var(--ink-soft); }
-.date-line { margin: 8px 0 0; font-size: 0.82rem; font-weight: 600; text-transform: capitalize; }
+.date-line { margin: 8px 0 0; font-size: var(--type-body); font-weight: 600; text-transform: capitalize; }
 h1, h2, h3, p { margin-top: 0; }
-h1 { margin-bottom: 0; font-size: clamp(1.72rem, 3vw, 2.55rem); line-height: 1.1; letter-spacing: -0.045em; }
-h2 { margin-bottom: 5px; font-size: 1.1rem; letter-spacing: -0.03em; }
+h1 { margin-bottom: 0; font-size: var(--type-page-title); line-height: var(--leading-tight); letter-spacing: -0.045em; }
+h2 { margin-bottom: 5px; font-size: var(--type-section-title); line-height: 1.25; letter-spacing: -0.03em; }
 .primary-button, .secondary-button, .small-button, .text-button, .icon-button { border: 0; transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease; }
 .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 0 17px; border-radius: 12px; background: var(--ink); color: #fffef5; box-shadow: 0 7px 15px rgba(45, 51, 47, 0.16); font-weight: 700; font-size: 0.85rem; }
 .primary-button span { font-size: 1.2rem; font-weight: 400; line-height: 0; }
@@ -53,23 +61,23 @@ h2 { margin-bottom: 5px; font-size: 1.1rem; letter-spacing: -0.03em; }
 .text-button { color: var(--ink); background: transparent; text-decoration: underline; text-underline-offset: 4px; font-size: 0.8rem; font-weight: 700; }
 
 .daily-goal { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 28px; margin-top: 40px; padding: 32px 40px; border-radius: 16px; background: var(--sky); box-shadow: 0 9px 24px rgba(56, 105, 133, 0.08); }
-.goal-copy h2 { margin-bottom: 12px; font-size: 1.24rem; }
-.goal-copy > p:not(.goal-feedback) { max-width: 360px; margin: 0; color: #4c6470; font-size: 0.83rem; line-height: 1.55; }
+.goal-copy h2 { margin-bottom: 12px; }
+.goal-copy > p:not(.goal-feedback) { max-width: 360px; margin: 0; color: #4c6470; font-size: var(--type-body); line-height: var(--leading-body); }
 .goal-form { display: grid; grid-template-columns: minmax(180px, 0.8fr) minmax(220px, 1.25fr) auto; align-items: end; min-width: 0; gap: 16px; }
 .goal-type-picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-width: 0; gap: 8px; margin: 0; padding: 0; border: 0; }
-.goal-type-picker legend { grid-column: 1 / -1; margin-bottom: 6px; color: #4c6470; font-size: 0.71rem; font-weight: 700; }
+.goal-type-picker legend { grid-column: 1 / -1; margin-bottom: 6px; color: #4c6470; font-size: var(--type-label); font-weight: 700; }
 .goal-type-picker label input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; clip-path: inset(50%); pointer-events: none; }
-.goal-type-picker label span { display: grid; min-height: 39px; place-items: center; padding: 0 7px; border: 1px solid rgba(53, 94, 113, 0.25); border-radius: 10px; color: #4c6470; font-size: 0.71rem; font-weight: 700; }
+.goal-type-picker label span { display: grid; min-height: 39px; place-items: center; padding: 0 7px; border: 1px solid rgba(53, 94, 113, 0.25); border-radius: 10px; color: #4c6470; font-size: var(--type-label); font-weight: 700; }
 .goal-type-picker label input:checked + span { border-color: var(--ink); background: var(--cream); color: var(--ink); }
-.goal-value { display: grid; min-width: 0; gap: 6px; color: #4c6470; font-size: 0.71rem; font-weight: 700; }
+.goal-value { display: grid; min-width: 0; gap: 6px; color: #4c6470; font-size: var(--type-label); font-weight: 700; }
 .goal-input-wrap { display: flex; align-items: center; height: 42px; overflow: hidden; border: 1px solid rgba(53, 94, 113, 0.25); border-radius: 10px; background: var(--surface); }
 .goal-input-wrap > span { padding-left: 11px; color: var(--ink-soft); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
 .goal-input-wrap > span:last-child { padding: 0 11px 0 6px; }
 .goal-input-wrap input { flex: 1 1 auto; width: auto; height: 40px; min-width: 0; padding: 0 7px; border: 0; border-radius: 0; }
 .goal-form .primary-button { min-height: 42px; white-space: nowrap; }
-.goal-feedback { margin: 24px 0 0; color: #4c6470; font-size: 0.74rem; font-weight: 600; line-height: 1.45; }
+.goal-feedback { margin: 24px 0 0; color: #4c6470; font-size: var(--type-meta); font-weight: 600; line-height: 1.45; }
 .period-toolbar { margin-top: 26px; padding: 23px 0; border-bottom: 1px solid var(--line); }
-.period-heading p, .section-heading p { margin: 0; font-size: 0.8rem; }
+.period-heading p, .section-heading p { margin: 0; font-size: var(--type-body); }
 .period-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
 .period-controls label, .filters label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 0.72rem; font-weight: 700; }
 input, select, textarea { width: 100%; border: 1px solid #d8d5c0; border-radius: 10px; background: var(--surface); color: var(--ink); }
@@ -93,25 +101,25 @@ input, select, textarea { width: 100%; border: 1px solid #d8d5c0; border-radius:
 .export-button:hover { background: #414a43; }
 .export-button:disabled { cursor: not-allowed; background: #d7d4c1; color: #76766c; }
 .export-feedback { min-height: 18px; margin: -12px 0 12px; color: var(--income); font-size: 0.74rem; font-weight: 600; }
-.daily-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 30px; }
-.daily-stat { display: grid; justify-items: center; gap: 9px; min-height: 120px; padding: 23px; border: 1px solid #e2ddc0; border-radius: 16px; background: #fff9df; box-shadow: 0 8px 18px rgba(89, 72, 41, 0.08); text-align: center; }
-.daily-stat span { color: #806b4c; font-size: 0.83rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-.daily-stat strong { font-size: clamp(1.55rem, 2.4vw, 2.1rem); letter-spacing: -0.05em; }
+.daily-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.daily-stat { display: grid; align-content: center; justify-items: start; gap: 8px; min-height: 104px; padding: 18px 20px; border: 1px solid #e2ddc0; border-radius: 14px; background: #fff9df; text-align: left; }
+.daily-stat span { color: #806b4c; font-size: var(--type-label); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.daily-stat strong { max-width: 100%; font-size: var(--type-card-value); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.045em; }
 .income-stat strong { color: var(--income); }
 .expense-stat strong { color: var(--expense); }
 .balance-stat { border-color: #adcfdf; background: var(--sky); }
 .sales-goal-progress { display: grid; gap: 15px; margin-top: 28px; padding: 25px 28px; border: 1px solid #e2ddc0; border-radius: 16px; background: #fff9df; box-shadow: 0 8px 18px rgba(89, 72, 41, 0.06); }
 .sales-goal-heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
-.sales-goal-heading h2 { margin-bottom: 7px; font-size: 1.32rem; }
-.sales-goal-heading p { margin: 0; color: #806b4c; font-size: 0.84rem; }
+.sales-goal-heading h2 { margin-bottom: 7px; }
+.sales-goal-heading p { margin: 0; color: #806b4c; font-size: var(--type-body); }
 .sales-goal-heading strong { color: var(--ink); font-size: 1.06rem; font-variant-numeric: tabular-nums; }
 .goal-progress-track { height: 12px; overflow: hidden; border-radius: 999px; background: #ebe2c4; }
 .goal-progress-bar { width: 0; height: 100%; border-radius: inherit; background: var(--peach); }
 .goal-progress-status { margin: 0; color: #806b4c; font-size: 0.78rem; font-weight: 700; }
 .movement-card { margin-top: 28px; padding: 28px; border: 1px solid #e2ddc0; border-radius: 16px; background: #fff9df; box-shadow: 0 8px 18px rgba(89, 72, 41, 0.06); }
 .movement-heading { display: flex; align-items: start; justify-content: space-between; gap: 15px; margin-bottom: 23px; }
-.movement-heading p { margin-bottom: 5px; color: #806b4c; font-size: 0.78rem; font-weight: 700; }
-.movement-heading h2 { margin: 0; font-size: 1.4rem; }
+.movement-heading p { margin-bottom: 5px; color: #806b4c; font-size: var(--type-label); font-weight: 700; }
+.movement-heading h2 { margin: 0; }
 .movement-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
 .movement-actions .primary-button { min-width: 210px; background: var(--peach); color: var(--ink); box-shadow: none; }
 .movement-actions .primary-button:hover { background: #f8ad7a; }
@@ -132,8 +140,8 @@ input, select, textarea { width: 100%; border: 1px solid #d8d5c0; border-radius:
 .transaction-type.expense { color: var(--expense); background: #ffe1d9; }
 .transaction-type.sale { color: #355f78; background: var(--sky); }
 .transaction-description { min-width: 0; }
-.transaction-description strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem; }
-.transaction-description span, .transaction-date { color: var(--ink-soft); font-size: 0.74rem; }
+.transaction-description strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); }
+.transaction-description span, .transaction-date { color: var(--ink-soft); font-size: var(--type-meta); }
 .transaction-date { text-align: right; }
 .transaction-value { min-width: 100px; text-align: right; font-size: 0.88rem; font-weight: 800; letter-spacing: -0.025em; }
 .transaction-value.income { color: var(--income); }
@@ -163,7 +171,7 @@ input, select, textarea { width: 100%; border: 1px solid #d8d5c0; border-radius:
 .empty-state { display: grid; justify-items: start; padding: 35px 0 10px; }
 .empty-symbol { display: grid; width: 38px; height: 38px; place-items: center; margin-bottom: 13px; border-radius: 12px; background: var(--sky); font-size: 1.3rem; }
 .empty-state h3 { margin-bottom: 7px; font-size: 1rem; letter-spacing: -0.025em; }
-.empty-state p { max-width: 390px; margin-bottom: 17px; color: var(--ink-soft); font-size: 0.84rem; line-height: 1.55; }
+.empty-state p { max-width: 390px; margin-bottom: 17px; color: var(--ink-soft); font-size: var(--type-body); line-height: var(--leading-body); }
 
 .transaction-dialog { width: min(610px, calc(100% - 28px)); padding: 0; border: 0; border-radius: 18px; background: var(--surface); box-shadow: 0 26px 70px rgba(42, 42, 30, 0.28); }
 .transaction-dialog::backdrop { background: rgba(50, 49, 38, 0.42); }
@@ -218,8 +226,11 @@ input, select, textarea { width: 100%; border: 1px solid #d8d5c0; border-radius:
   .topbar .primary-button { width: 100%; }
   .period-toolbar { margin-top: 34px; }
   .daily-goal { margin-top: 28px; padding: 24px; row-gap: 24px; }
-  .daily-stats { grid-template-columns: 1fr; }
-  .daily-stat { min-height: 100px; padding: 18px; }
+  h1 { font-size: 1.875rem; }
+  .daily-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .daily-stat { min-height: 88px; padding: 14px; }
+  .daily-stat strong { font-size: 1.25rem; }
+  .balance-stat { grid-column: 1 / -1; }
   .sales-goal-progress, .movement-card { padding: 20px; }
   .sales-goal-heading { display: grid; gap: 8px; }
   .movement-actions .primary-button { width: 100%; }
