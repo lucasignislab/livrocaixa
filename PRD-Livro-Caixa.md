@@ -50,8 +50,9 @@ O uso acontece principalmente em celular, entre pedidos, compras e entregas, e t
 ### Dentro do escopo — primeira versão
 
 - Dashboard com saldo atual, total de entradas, total de saídas e resultado do período.
-- Cadastro de lançamentos de entrada e saída.
-- Campos de lançamento: tipo, descrição, valor, data, categoria, meio de pagamento e observação opcional.
+- Cadastro de vendas com entrada e saída obrigatórias no mesmo registro.
+- Campos de venda: descrição, valor de entrada, valor de saída, quantidade de marmitas, data, meio de pagamento e observação opcional.
+- Cálculo automático do resultado de cada venda como entrada menos saída.
 - Categorias iniciais adequadas ao negócio de marmitas:
   - Receitas: venda de marmitas, encomendas, bebidas, sobremesas, outros recebimentos.
   - Despesas: ingredientes, embalagens, gás, combustível/entrega, taxas de aplicativos, aluguel, água/luz, marketing, manutenção e outros gastos.
@@ -59,6 +60,7 @@ O uso acontece principalmente em celular, entre pedidos, compras e entregas, e t
 - Filtros por período, tipo, categoria e meio de pagamento.
 - Edição e exclusão de lançamentos.
 - Resumo financeiro por categoria e por período.
+- Exportação dos lançamentos filtrados em CSV para backup diário.
 - Persistência local dos dados no navegador para que os lançamentos continuem disponíveis no mesmo dispositivo.
 - Interface responsiva com prioridade para mobile.
 
@@ -115,7 +117,7 @@ O sistema deve mostrar, para o período selecionado:
 
 ### RF02 — Registrar movimentação
 
-O sistema deve permitir cadastrar uma entrada ou saída com valor, data, categoria e descrição. O campo de meio de pagamento deve permitir, no mínimo, dinheiro, PIX, cartão e transferência/outros.
+O sistema deve permitir cadastrar uma venda somente após o preenchimento manual dos valores de entrada e saída. O resultado deve ser calculado automaticamente como entrada menos saída. O campo de meio de pagamento deve permitir, no mínimo, dinheiro, PIX, cartão e transferência/outros.
 
 ### RF03 — Gerenciar categorias
 
@@ -141,11 +143,15 @@ O sistema deve apresentar um resumo por categoria que permita identificar onde h
 
 Os dados cadastrados devem continuar disponíveis ao fechar e reabrir o navegador no mesmo dispositivo, enquanto os dados locais do navegador não forem apagados.
 
+### RF09 — Exportar histórico em CSV
+
+O usuário deve conseguir exportar os lançamentos do dia ou período selecionado em CSV, com data, tipo, descrição, quantidade, entrada, saída, resultado, pagamento e observação.
+
 ## 7. Histórias de usuários
 
 ### HU01 — Registrar uma venda
 
-Como dono do negócio, quero registrar o recebimento de uma venda de marmitas para manter o caixa atualizado.
+Como dono do negócio, quero informar a entrada e a saída de cada venda para que o sistema calcule automaticamente o resultado e mantenha o caixa atualizado.
 
 ### HU02 — Registrar uma despesa
 
@@ -183,15 +189,17 @@ Como dono do negócio, quero registrar uma movimentação pelo celular para não
 
 ### CA01 — Cadastro válido de lançamento
 
-- Dado que o usuário preenche tipo, descrição, valor positivo, data e categoria válidos, quando confirmar o formulário, então o lançamento deve ser salvo e exibido na lista.
+- Dado que o usuário preenche descrição, entrada positiva, saída positiva e data válida, quando confirmar o formulário, então a venda deve ser salva e exibida na lista.
+- O botão de salvar deve permanecer desabilitado até que entrada e saída tenham valores positivos.
+- O resultado da venda deve ser atualizado automaticamente durante o preenchimento, usando entrada menos saída.
 - O valor deve ser armazenado e exibido em reais, com duas casas decimais.
 - Ao salvar uma entrada, o total de entradas e o saldo devem ser atualizados.
 - Ao salvar uma saída, o total de saídas e o saldo devem ser atualizados.
 
 ### CA02 — Validação do formulário
 
-- O sistema não deve salvar o lançamento se tipo, descrição, valor, data ou categoria não forem preenchidos.
-- O sistema não deve aceitar valor igual a zero ou negativo.
+- O sistema não deve salvar a venda se descrição, entrada, saída ou data não forem preenchidas.
+- O sistema não deve aceitar entrada ou saída igual a zero ou negativa.
 - O sistema deve informar de forma clara qual campo precisa ser corrigido.
 
 ### CA03 — Cálculo do resumo
@@ -230,6 +238,14 @@ Como dono do negócio, quero registrar uma movimentação pelo celular para não
 - Campos e botões devem poder ser usados por toque.
 - Formulários devem ter rótulos visíveis e mensagens de validação associadas aos respectivos campos.
 - A navegação por teclado deve permitir alcançar e acionar controles essenciais.
+
+### CA09 — Exportação CSV
+
+- O botão de exportação deve ficar desabilitado quando não houver lançamentos no filtro atual.
+- O arquivo deve conter somente os lançamentos visíveis no dia ou período filtrado.
+- O nome do arquivo deve indicar a data ou o intervalo exportado.
+- Valores monetários devem ser separados em entrada, saída e resultado.
+- O arquivo deve usar codificação UTF-8 e formato compatível com Excel em português.
 
 ## 9. Edge cases
 

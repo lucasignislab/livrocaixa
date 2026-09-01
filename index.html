@@ -94,27 +94,26 @@
           <form id="transactionForm" novalidate>
             <div class="movement-heading">
               <div>
-                <p id="formContext">Nova movimentação</p>
-                <h2 id="dialogTitle">Registre no seu caixa</h2>
+                <p id="formContext">Nova venda</p>
+                <h2 id="dialogTitle">Registre entrada e saída</h2>
               </div>
               <button class="secondary-button" id="cancelDialog" type="button" hidden>Cancelar edição</button>
             </div>
 
             <input id="transactionId" type="hidden" />
-            <fieldset class="type-picker">
-              <legend>Tipo de movimentação</legend>
-              <label><input type="radio" name="type" value="income" checked /><span>Entrada</span></label>
-              <label><input type="radio" name="type" value="expense" /><span>Saída</span></label>
-            </fieldset>
 
             <div class="form-grid">
-              <label class="field">Descrição
+              <label class="field full">Descrição da venda
                 <input id="description" name="description" type="text" maxlength="80" placeholder="Ex.: 30 marmitas vendidas" required />
                 <span class="field-error" id="descriptionError"></span>
               </label>
-              <label class="field">Valor (R$)
-                <input id="amount" name="amount" type="text" inputmode="decimal" placeholder="0,00" required />
-                <span class="field-error" id="amountError"></span>
+              <label class="field">Entrada (R$)
+                <input id="incomeAmount" name="incomeAmount" type="text" inputmode="decimal" placeholder="Valor recebido" required />
+                <span class="field-error" id="incomeAmountError"></span>
+              </label>
+              <label class="field">Saída (R$)
+                <input id="expenseAmount" name="expenseAmount" type="text" inputmode="decimal" placeholder="Custo da venda" required />
+                <span class="field-error" id="expenseAmountError"></span>
               </label>
               <label class="field quantity-field">Quantidade de marmitas
                 <input id="quantity" name="quantity" type="number" min="1" step="1" inputmode="numeric" placeholder="Ex.: 30" />
@@ -130,21 +129,22 @@
                 </select>
                 <span class="field-help">Selecione como esse valor foi recebido ou pago.</span>
               </label>
-              <label class="field">Data
+              <label class="field full">Data
                 <input id="date" name="date" type="date" required />
                 <span class="field-error" id="dateError"></span>
-              </label>
-              <label class="field full">Categoria
-                <select id="category" name="category" required></select>
-                <span class="field-error" id="categoryError"></span>
               </label>
               <label class="field full">Observação <span>opcional</span>
                 <textarea id="note" name="note" rows="2" maxlength="240" placeholder="Algum detalhe que ajude você a lembrar depois."></textarea>
               </label>
             </div>
+            <div class="sale-result" id="saleResult" aria-live="polite">
+              <span>Resultado da venda</span>
+              <strong id="calculatedResult">R$ 0,00</strong>
+              <small>Entrada menos saída</small>
+            </div>
             <p class="future-warning" id="futureWarning" hidden>Essa data está no futuro. Confirme se é um lançamento planejado.</p>
             <div class="movement-actions">
-              <button class="primary-button" type="submit">Salvar movimentação</button>
+              <button class="primary-button" id="saveTransaction" type="submit" disabled>Salvar venda</button>
             </div>
           </form>
         </section>
@@ -165,8 +165,12 @@
                 <h2>Histórico de lançamentos</h2>
                 <p id="transactionCount">Registre cada entrada ou saída do seu dia.</p>
               </div>
-              <button class="small-button" id="showFilters" type="button" aria-expanded="false">Filtros</button>
+              <div class="section-actions">
+                <button class="export-button" id="exportCsv" type="button" disabled>Exportar CSV</button>
+                <button class="small-button" id="showFilters" type="button" aria-expanded="false">Filtros</button>
+              </div>
             </div>
+            <p class="export-feedback" id="exportFeedback" aria-live="polite"></p>
 
             <div class="filters" id="filters" hidden>
               <label>De
@@ -178,6 +182,7 @@
               <label>Tipo
                 <select id="filterType">
                   <option value="all">Todos</option>
+                  <option value="sale">Vendas</option>
                   <option value="income">Entradas</option>
                   <option value="expense">Saídas</option>
                 </select>

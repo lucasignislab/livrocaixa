@@ -12,7 +12,6 @@ const transactionList = document.querySelector('#transactionList');
 const categorySummary = document.querySelector('#categorySummary');
 const startDateInput = document.querySelector('#startDate');
 const endDateInput = document.querySelector('#endDate');
-const categorySelect = document.querySelector('#category');
 const filterCategory = document.querySelector('#filterCategory');
 const goalForm = document.querySelector('#goalForm');
 const goalValue = document.querySelector('#goalValue');
@@ -97,19 +96,29 @@ function parseCurrency(value) {
   return Number(normalized);
 }
 
-function selectedType() {
-  return document.querySelector('input[name="type"]:checked').value;
-}
-
 function populateCategories(target, type, includeAll = false) {
   const value = target.value;
   target.innerHTML = includeAll ? '<option value="all">Todas</option>' : '';
-  const available = includeAll ? [...categories.income, ...categories.expense] : categories[type];
+  const available = includeAll ? ['Venda registrada', ...categories.income, ...categories.expense] : (categories[type] || []);
   [...new Set(available)].forEach((category) => {
     const option = new Option(category, category);
     target.add(option);
   });
   target.value = available.includes(value) || value === 'all' ? value : target.options[0].value;
+}
+
+function incomeFor(item) {
+  if (item.type === 'sale') return Number(item.incomeAmount) || 0;
+  return item.type === 'income' ? Number(item.amount) || 0 : 0;
+}
+
+function expenseFor(item) {
+  if (item.type === 'sale') return Number(item.expenseAmount) || 0;
+  return item.type === 'expense' ? Number(item.amount) || 0 : 0;
+}
+
+function resultFor(item) {
+  return incomeFor(item) - expenseFor(item);
 }
 
 function resetPeriod() {
@@ -141,6 +150,49 @@ function getFilteredTransactions() {
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 }
 
+function csvCell(value) {
+  let text = String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
+  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function csvNumber(value) {
+  return (Number(value) || 0).toFixed(2).replace('.', ',');
+}
+
+function exportTransactionsCsv() {
+  const transactions = getFilteredTransactions();
+  const feedback = document.querySelector('#exportFeedback');
+  if (!transactions.length) {
+    feedback.textContent = 'Não há lançamentos nesse período para exportar.';
+    return;
+  }
+  const headers = ['Data', 'Tipo', 'Descrição', 'Quantidade de marmitas', 'Entrada (R$)', 'Saída (R$)', 'Resultado (R$)', 'Pagamento', 'Observação'];
+  const rows = transactions.map((item) => [
+    item.date,
+    item.type === 'sale' ? 'Venda' : item.type === 'income' ? 'Entrada' : 'Saída',
+    item.description,
+    Number(item.quantity) || 0,
+    csvNumber(incomeFor(item)),
+    csvNumber(expenseFor(item)),
+    csvNumber(resultFor(item)),
+    item.payment || '',
+    item.note || '',
+  ]);
+  const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n')}`;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const period = startDateInput.value === endDateInput.value ? startDateInput.value : `${startDateInput.value}_a_${endDateInput.value}`;
+  link.href = url;
+  link.download = `livro-caixa_${period || localDate()}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  feedback.textContent = `CSV exportado com ${transactions.length} ${transactions.length === 1 ? 'lançamento' : 'lançamentos'}.`;
+}
+
 function getPeriodTransactions() {
   const startDate = startDateInput.value;
   const endDate = endDateInput.value;
@@ -149,8 +201,8 @@ function getPeriodTransactions() {
 
 function renderSummary() {
   const transactions = state.transactions.filter((item) => item.date === localDate());
-  const income = transactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
-  const expense = transactions.filter((item) => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
+  const income = transactions.reduce((sum, item) => sum + incomeFor(item), 0);
+  const expense = transactions.reduce((sum, item) => sum + expenseFor(item), 0);
   const balance = income - expense;
   document.querySelector('[data-summary="income"]').textContent = formatCurrency(income);
   document.querySelector('[data-summary="expense"]').textContent = formatCurrency(expense);
@@ -173,7 +225,7 @@ function renderSalesGoal(todayTransactions, income) {
   }
   const current = goal.type === 'revenue'
     ? income
-    : todayTransactions.filter((item) => item.type === 'income').reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    : todayTransactions.filter((item) => item.type === 'income' || item.type === 'sale').reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   const percent = Math.min(100, (current / goal.value) * 100);
   const goalLabel = goal.type === 'revenue' ? formatCurrency(goal.value) : `${goal.value} marmitas`;
   const currentLabel = goal.type === 'revenue' ? formatCurrency(current) : `${current} marmitas`;
@@ -185,6 +237,7 @@ function renderSalesGoal(todayTransactions, income) {
 
 function renderTransactions() {
   const transactions = getFilteredTransactions();
+  document.querySelector('#exportCsv').disabled = transactions.length === 0;
   document.querySelector('#transactionCount').textContent = transactions.length === 1 ? '1 lançamento encontrado' : `${transactions.length} lançamentos encontrados`;
   transactionList.innerHTML = '';
   if (!transactions.length) {
@@ -195,11 +248,18 @@ function renderTransactions() {
   transactions.forEach((item) => {
     const row = document.createElement('article');
     row.className = 'transaction-row';
+    const isSale = item.type === 'sale';
+    const typeLabel = isSale ? 'Venda' : item.type === 'income' ? 'Entrada' : 'Saída';
+    const typeSymbol = isSale ? '↕' : item.type === 'income' ? '↓' : '↑';
+    const detail = isSale ? `Venda registrada · ${item.payment}` : `${item.category} · ${item.payment}`;
+    const valueMarkup = isSale
+      ? `<div class="transaction-sale-values"><span class="income">+ ${formatCurrency(incomeFor(item))}</span><span class="expense">− ${formatCurrency(expenseFor(item))}</span><strong>${formatCurrency(resultFor(item))}</strong></div>`
+      : `<strong class="transaction-value ${item.type}">${item.type === 'income' ? '+' : '−'} ${formatCurrency(item.amount)}</strong>`;
     row.innerHTML = `
-      <span class="transaction-type ${item.type}" aria-label="${item.type === 'income' ? 'Entrada' : 'Saída'}">${item.type === 'income' ? '↓' : '↑'}</span>
-      <div class="transaction-description"><strong>${escapeHtml(item.description)}</strong><span>${escapeHtml(item.category)} · ${escapeHtml(item.payment)}</span></div>
+      <span class="transaction-type ${item.type}" aria-label="${typeLabel}">${typeSymbol}</span>
+      <div class="transaction-description"><strong>${escapeHtml(item.description)}</strong><span>${escapeHtml(detail)}</span></div>
       <time class="transaction-date" datetime="${item.date}">${formatDate(item.date)}</time>
-      <strong class="transaction-value ${item.type}">${item.type === 'income' ? '+' : '−'} ${formatCurrency(item.amount)}</strong>
+      ${valueMarkup}
       <details class="row-actions"><summary aria-label="Ações para ${escapeHtml(item.description)}">•••</summary><div class="row-menu"><button type="button" data-edit="${item.id}">Editar</button><button class="delete-action" type="button" data-delete="${item.id}">Excluir</button></div></details>`;
     transactionList.append(row);
   });
@@ -207,21 +267,29 @@ function renderTransactions() {
 
 function renderCategories() {
   const grouped = getPeriodTransactions().reduce((result, item) => {
-    result[item.category] = (result[item.category] || 0) + item.amount;
+    if (item.type === 'sale') {
+      result['Vendas registradas'] = result['Vendas registradas'] || { amount: 0, type: 'income' };
+      result['Custos das vendas'] = result['Custos das vendas'] || { amount: 0, type: 'expense' };
+      result['Vendas registradas'].amount += incomeFor(item);
+      result['Custos das vendas'].amount += expenseFor(item);
+    } else {
+      const name = item.category || (item.type === 'income' ? 'Entradas' : 'Saídas');
+      result[name] = result[name] || { amount: 0, type: item.type };
+      result[name].amount += Number(item.amount) || 0;
+    }
     return result;
   }, {});
-  const entries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(grouped).sort((a, b) => b[1].amount - a[1].amount);
   categorySummary.innerHTML = '';
   if (!entries.length) {
     categorySummary.innerHTML = '<p class="category-empty">Quando você registrar movimentações, verá aqui quais categorias mais movimentam o seu caixa.</p>';
     return;
   }
-  const maxValue = entries[0][1];
-  entries.forEach(([name, amount]) => {
-    const related = getPeriodTransactions().find((item) => item.category === name);
+  const maxValue = entries[0][1].amount;
+  entries.forEach(([name, summary]) => {
     const item = document.createElement('div');
     item.className = 'category-item';
-    item.innerHTML = `<div class="category-item-top"><span>${escapeHtml(name)}</span><strong>${formatCurrency(amount)}</strong></div><div class="category-track"><div class="category-bar ${related.type}" style="width:${Math.max(8, (amount / maxValue) * 100)}%"></div></div>`;
+    item.innerHTML = `<div class="category-item-top"><span>${escapeHtml(name)}</span><strong>${formatCurrency(summary.amount)}</strong></div><div class="category-track"><div class="category-bar ${summary.type}" style="width:${Math.max(8, (summary.amount / maxValue) * 100)}%"></div></div>`;
     categorySummary.append(item);
   });
 }
@@ -257,24 +325,33 @@ function clearErrors() {
   document.querySelectorAll('.field-error').forEach((element) => { element.textContent = ''; });
 }
 
-function updateFormCategories() {
-  populateCategories(categorySelect, selectedType());
-  const isIncome = selectedType() === 'income';
-  const quantityField = document.querySelector('.quantity-field');
-  const quantityInput = document.querySelector('#quantity');
-  quantityField.hidden = !isIncome;
-  quantityInput.disabled = !isIncome;
-  if (!isIncome) quantityInput.value = '';
+function readSaleAmounts() {
+  return {
+    incomeAmount: parseCurrency(document.querySelector('#incomeAmount').value),
+    expenseAmount: parseCurrency(document.querySelector('#expenseAmount').value),
+  };
+}
+
+function updateSaleCalculation() {
+  const { incomeAmount, expenseAmount } = readSaleAmounts();
+  const hasIncome = Number.isFinite(incomeAmount) && incomeAmount > 0;
+  const hasExpense = Number.isFinite(expenseAmount) && expenseAmount > 0;
+  const result = hasIncome && hasExpense ? incomeAmount - expenseAmount : 0;
+  const resultPanel = document.querySelector('#saleResult');
+  document.querySelector('#calculatedResult').textContent = formatCurrency(result);
+  resultPanel.classList.toggle('positive', hasIncome && hasExpense && result >= 0);
+  resultPanel.classList.toggle('negative', hasIncome && hasExpense && result < 0);
+  document.querySelector('#saveTransaction').disabled = !(hasIncome && hasExpense);
 }
 
 function openNewTransaction() {
   form.reset();
   clearErrors();
   document.querySelector('#transactionId').value = '';
-  document.querySelector('#formContext').textContent = 'Novo lançamento';
-  document.querySelector('#dialogTitle').textContent = 'Registre no seu caixa';
+  document.querySelector('#formContext').textContent = 'Nova venda';
+  document.querySelector('#dialogTitle').textContent = 'Registre entrada e saída';
   document.querySelector('#date').value = localDate();
-  updateFormCategories();
+  updateSaleCalculation();
   document.querySelector('#futureWarning').hidden = true;
   document.querySelector('#cancelDialog').hidden = true;
   setActiveView('transactions');
@@ -287,19 +364,18 @@ function openEditTransaction(id) {
   if (!item) return;
   clearErrors();
   document.querySelector('#transactionId').value = item.id;
-  document.querySelector(`input[name="type"][value="${item.type}"]`).checked = true;
-  updateFormCategories();
   document.querySelector('#description').value = item.description;
-  document.querySelector('#amount').value = item.amount.toFixed(2).replace('.', ',');
+  document.querySelector('#incomeAmount').value = incomeFor(item) ? incomeFor(item).toFixed(2).replace('.', ',') : '';
+  document.querySelector('#expenseAmount').value = expenseFor(item) ? expenseFor(item).toFixed(2).replace('.', ',') : '';
   document.querySelector('#quantity').value = item.quantity || '';
   document.querySelector('#date').value = item.date;
-  categorySelect.value = item.category;
   document.querySelector('#payment').value = item.payment;
   document.querySelector('#note').value = item.note || '';
-  document.querySelector('#formContext').textContent = 'Editar lançamento';
-  document.querySelector('#dialogTitle').textContent = 'Corrigir o caixa';
+  document.querySelector('#formContext').textContent = 'Editar venda';
+  document.querySelector('#dialogTitle').textContent = 'Corrija entrada e saída';
   document.querySelector('#futureWarning').hidden = item.date <= localDate();
   document.querySelector('#cancelDialog').hidden = false;
+  updateSaleCalculation();
   setActiveView('transactions');
   document.querySelector('#movementCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelector('#description').focus();
@@ -310,14 +386,14 @@ function closeDialog() { openNewTransaction(); }
 function validateForm() {
   clearErrors();
   const description = document.querySelector('#description').value.trim();
-  const amount = parseCurrency(document.querySelector('#amount').value);
+  const { incomeAmount, expenseAmount } = readSaleAmounts();
   const date = document.querySelector('#date').value;
   let valid = true;
   if (!description) { document.querySelector('#descriptionError').textContent = 'Informe uma descrição.'; valid = false; }
-  if (!Number.isFinite(amount) || amount <= 0) { document.querySelector('#amountError').textContent = 'Informe um valor maior que zero.'; valid = false; }
+  if (!Number.isFinite(incomeAmount) || incomeAmount <= 0) { document.querySelector('#incomeAmountError').textContent = 'Informe a entrada da venda.'; valid = false; }
+  if (!Number.isFinite(expenseAmount) || expenseAmount <= 0) { document.querySelector('#expenseAmountError').textContent = 'Informe a saída da venda.'; valid = false; }
   if (!date) { document.querySelector('#dateError').textContent = 'Informe uma data.'; valid = false; }
-  if (!categorySelect.value) { document.querySelector('#categoryError').textContent = 'Selecione uma categoria.'; valid = false; }
-  return valid ? { description, amount, date } : null;
+  return valid ? { description, incomeAmount, expenseAmount, date } : null;
 }
 
 function submitForm(event) {
@@ -327,12 +403,14 @@ function submitForm(event) {
   const id = document.querySelector('#transactionId').value;
   const data = {
     id: id || crypto.randomUUID(),
-    type: selectedType(),
+    type: 'sale',
     description: validated.description,
-    amount: validated.amount,
-    quantity: selectedType() === 'income' ? Number(document.querySelector('#quantity').value) || 0 : 0,
+    incomeAmount: validated.incomeAmount,
+    expenseAmount: validated.expenseAmount,
+    amount: validated.incomeAmount - validated.expenseAmount,
+    quantity: Number(document.querySelector('#quantity').value) || 0,
     date: validated.date,
-    category: categorySelect.value,
+    category: 'Venda registrada',
     payment: document.querySelector('#payment').value,
     note: document.querySelector('#note').value.trim(),
     createdAt: id ? state.transactions.find((item) => item.id === id).createdAt : Date.now(),
@@ -361,7 +439,6 @@ function updateClock() {
 updateClock();
 window.setInterval(updateClock, 30_000);
 resetPeriod();
-populateCategories(categorySelect, 'income');
 populateCategories(filterCategory, 'income', true);
 renderGoal();
 render();
@@ -376,10 +453,17 @@ document.querySelector('#cancelDialog').addEventListener('click', closeDialog);
 form.addEventListener('submit', submitForm);
 goalForm.addEventListener('submit', submitGoal);
 document.querySelectorAll('input[name="goalType"]').forEach((input) => input.addEventListener('change', updateGoalForm));
-document.querySelectorAll('input[name="type"]').forEach((input) => input.addEventListener('change', updateFormCategories));
 document.querySelector('#date').addEventListener('change', (event) => { document.querySelector('#futureWarning').hidden = event.target.value <= localDate(); });
-document.querySelector('#amount').addEventListener('blur', (event) => { const amount = parseCurrency(event.target.value); if (Number.isFinite(amount) && amount > 0) event.target.value = amount.toFixed(2).replace('.', ','); });
+document.querySelectorAll('#incomeAmount, #expenseAmount').forEach((input) => {
+  input.addEventListener('input', updateSaleCalculation);
+  input.addEventListener('blur', (event) => {
+    const amount = parseCurrency(event.target.value);
+    if (Number.isFinite(amount) && amount > 0) event.target.value = amount.toFixed(2).replace('.', ',');
+    updateSaleCalculation();
+  });
+});
 document.querySelector('#showFilters').addEventListener('click', (event) => { const filters = document.querySelector('#filters'); filters.hidden = !filters.hidden; event.currentTarget.setAttribute('aria-expanded', String(!filters.hidden)); });
+document.querySelector('#exportCsv').addEventListener('click', exportTransactionsCsv);
 document.querySelector('#clearFilters').addEventListener('click', () => { document.querySelector('#filterType').value = 'all'; filterCategory.value = 'all'; document.querySelector('#filterPayment').value = 'all'; render(); });
 document.querySelectorAll('#startDate, #endDate, #filterType, #filterCategory, #filterPayment').forEach((input) => input.addEventListener('change', render));
 document.querySelector('#currentMonth').addEventListener('click', () => { resetPeriod(); render(); });
